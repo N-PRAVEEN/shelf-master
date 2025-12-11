@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#007bff">
+    <title>Shelf Master</title>
+
+    <!-- 1. STATIC ICONS (Required for Bookmarks/Widgets to see the logo) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iIzAwN2JmZiIvPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0xMDYgMTQwaDMwMHY1MEgxMDZ6bTAgMTEwaDMwMHY1MEgxMDZ6bTAgMTEwaDMwMHY1MEgxMDZ6Ii8+PC9zdmc+">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iIzAwN2JmZiIvPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0xMDYgMTQwaDMwMHY1MEgxMDZ6bTAgMTEwaDMwMHY1MEgxMDZ6bTAgMTEwaDMwMHY1MEgxMDZ6Ii8+PC9zdmc+">
+
+    <!-- 2. Web App Manifest (Embedded for Installability where supported) -->
+    <script>
+        const iconBase64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iIzAwN2JmZiIvPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0xMDYgMTQwaDMwMHY1MEgxMDZ6bTAgMTEwaDMwMHY1MEgxMDZ6bTAgMTEwaDMwMHY1MEgxMDZ6Ii8+PC9zdmc+";
+        
+        const manifest = {
+            "name": "Shelf Master",
+            "short_name": "ShelfMaster",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#ffffff",
+            "theme_color": "#007bff",
+            "orientation": "portrait",
+            "icons": [{ "src": iconBase64, "sizes": "512x512", "type": "image/svg+xml" }]
+        };
+
+        const linkManifest = document.createElement('link');
+        linkManifest.rel = 'manifest';
+        linkManifest.href = 'data:application/manifest+json;base64,' + btoa(JSON.stringify(manifest));
+        document.head.appendChild(linkManifest);
+    </script>
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <style>
+        :root { --primary: #007bff; --danger: #dc3545; --success: #28a745; --text-dark: #333; --text-light: #666; --bg-light: #f8f9fa; --border: #e9ecef; --shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #fff; color: var(--text-dark); padding-bottom: 80px; }
+        h1, h2, h3 { margin: 0; }
+        .hidden { display: none !important; }
+        .btn { border: none; padding: 10px 15px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+        .btn:active { opacity: 0.8; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        header { position: sticky; top: 0; z-index: 100; background: white; box-shadow: var(--shadow); }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--primary); color: white; }
+        .controls { padding: 10px; display: grid; grid-template-columns: 1fr 120px; gap: 10px; background: #fff; border-bottom: 1px solid var(--border); }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; outline: none; }
+        input:focus { border-color: var(--primary); }
+        #product-list { list-style: none; padding: 0; margin: 0; }
+        .product-row { display: grid; grid-template-columns: 60px 1fr 90px; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border); align-items: center; background: white; transition: opacity 0.3s ease, transform 0.3s ease; user-select: none; }
+        .product-row.deleting { opacity: 0; transform: translateX(-20px); }
+        .p-img-wrapper { width: 60px; height: 60px; border-radius: 12px; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
+        .p-img { width: 100%; height: 100%; object-fit: cover; }
+        .p-img-placeholder { font-size: 24px; color: #ccc; }
+        .p-details { overflow: hidden; }
+        .p-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .p-unit { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; background: var(--bg-light); padding: 2px 6px; border-radius: 4px; display: inline-block; }
+        mark { background-color: #ffeeba; color: var(--text-dark); padding: 0 2px; }
+        .p-qty-input { width: 100%; height: 50px; text-align: center; font-size: 18px; font-weight: bold; border: 2px solid var(--border); background: #fdfdfd; }
+        .p-qty-input:focus { border-color: var(--primary); background: #fff; }
+        .p-qty-input.filled { border-color: var(--success); color: var(--success); background: #f0fff4; }
+        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 200; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .modal.active { opacity: 1; pointer-events: auto; }
+        .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 12px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
+        .toggle-wrapper { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(22px); }
+        #preview-container { width: 100%; height: 150px; background: #eee; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; border: 2px dashed #ccc; }
+        #preview-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="top-bar">
+            <h3>Shelf Master</h3>
+            <button class="btn btn-danger" id="reset-day-btn" style="font-size: 12px; padding: 6px 10px;">Reset Day</button>
+        </div>
+        <div class="controls">
+            <input type="text" id="search-input" placeholder="Search products...">
+            <select id="filter-select">
+                <option value="all">Show All</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+            </select>
+        </div>
+    </header>
+
+    <ul id="product-list"></ul>
+    <button class="fab" id="open-add-modal">+</button>
+
+    <div class="modal" id="add-modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 15px;">Add Product</h2>
+            <div id="preview-container" onclick="document.getElementById('file-input').click()">
+                <span id="preview-text" style="color:#888;">Tap to Capture/Upload</span>
+                <img id="preview-img" class="hidden">
+            </div>
+            <input type="file" id="file-input" accept="image/*" capture="environment" class="hidden">
+            <div class="form-group">
+                <label class="form-label">Product Name</label>
+                <input type="text" id="p-name-input" placeholder="e.g. Milk, Rice">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Unit Type</label>
+                <div class="toggle-wrapper">
+                    <span id="unit-label-count" style="font-weight:bold; color:var(--primary);">Count</span>
+                    <label class="switch">
+                        <input type="checkbox" id="unit-toggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span id="unit-label-kg" style="color:#ccc;">KG</span>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-outline" style="flex:1" id="cancel-add">Cancel</button>
+                <button class="btn btn-primary" style="flex:1" id="save-product">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DB_NAME = 'ShelfMasterDB';
+        const DB_VERSION = 1;
+        let db;
+        let productData = [];
+        let currentImageBlob = null;
+        const el = (id) => document.getElementById(id);
+
+        function initDB() {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (e) => {
+                db = e.target.result;
+                if (!db.objectStoreNames.contains('products')) db.createObjectStore('products', { keyPath: 'id' });
+            };
+            request.onsuccess = (e) => { db = e.target.result; loadProducts(); };
+        }
+
+        el('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const maxWidth = 300;
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth) { height = (maxWidth / width) * height; width = maxWidth; }
+                    canvas.width = width; canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob((blob) => {
+                        currentImageBlob = blob;
+                        el('preview-img').src = URL.createObjectURL(blob);
+                        el('preview-img').classList.remove('hidden');
+                        el('preview-text').classList.add('hidden');
+                    }, 'image/jpeg', 0.7);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        const modal = el('add-modal');
+        const unitToggle = el('unit-toggle');
+        el('open-add-modal').onclick = () => { modal.classList.add('active'); resetForm(); };
+        el('cancel-add').onclick = () => modal.classList.remove('active');
+
+        unitToggle.addEventListener('change', () => {
+            el('unit-label-kg').style.color = unitToggle.checked ? 'var(--primary)' : '#ccc';
+            el('unit-label-kg').style.fontWeight = unitToggle.checked ? 'bold' : 'normal';
+            el('unit-label-count').style.color = unitToggle.checked ? '#ccc' : 'var(--primary)';
+            el('unit-label-count').style.fontWeight = unitToggle.checked ? 'normal' : 'bold';
+        });
+
+        function resetForm() {
+            el('p-name-input').value = ''; el('file-input').value = '';
+            el('preview-img').src = ''; el('preview-img').classList.add('hidden'); el('preview-text').classList.remove('hidden');
+            currentImageBlob = null; unitToggle.checked = false; unitToggle.dispatchEvent(new Event('change'));
+        }
+
+        el('save-product').onclick = () => {
+            const name = el('p-name-input').value.trim();
+            if (!name) return alert('Product Name is required');
+            const newProduct = { id: Date.now(), name: name, image: currentImageBlob, unit: unitToggle.checked ? 'kg' : 'count', quantity: null, filled: false };
+            const tx = db.transaction(['products'], 'readwrite');
+            tx.objectStore('products').add(newProduct);
+            tx.oncomplete = () => { modal.classList.remove('active'); loadProducts(); };
+        };
+
+        async function loadProducts() {
+            const tx = db.transaction(['products'], 'readonly');
+            const req = tx.objectStore('products').getAll();
+            req.onsuccess = () => { productData = req.result; productData.sort((a, b) => a.name.localeCompare(b.name)); renderList(); };
+        }
+
+        function renderList() {
+            const list = el('product-list');
+            const searchVal = el('search-input').value.toLowerCase();
+            const filterVal = el('filter-select').value;
+            list.innerHTML = '';
+            productData.forEach(p => {
+                if (searchVal && !p.name.toLowerCase().includes(searchVal)) return;
+                if (filterVal === 'pending' && p.filled) return;
+                if (filterVal === 'completed' && !p.filled) return;
+                const li = document.createElement('li');
+                li.className = 'product-row'; li.dataset.id = p.id;
+                let imgUrl = p.image ? URL.createObjectURL(p.image) : '';
+                let displayName = searchVal ? p.name.replace(new RegExp(`(${searchVal})`, 'gi'), '<mark>$1</mark>') : p.name;
+                const step = p.unit === 'kg' ? '0.01' : '1';
+                const qtyValue = p.quantity !== null ? p.quantity : '';
+                const filledClass = p.filled ? 'filled' : '';
+                li.innerHTML = `
+                    <div class="p-img-wrapper">${imgUrl ? `<img src="${imgUrl}" class="p-img">` : `<span class="p-img-placeholder">📷</span>`}</div>
+                    <div class="p-details"><div class="p-name">${displayName}</div><span class="p-unit">${p.unit}</span></div>
+                    <div><input type="number" step="${step}" class="p-qty-input ${filledClass}" value="${qtyValue}" placeholder="-" data-id="${p.id}"></div>
+                `;
+                const input = li.querySelector('input');
+                input.addEventListener('blur', (e) => updateQuantity(p.id, e.target.value));
+                setupLongPress(li, p.id);
+                list.appendChild(li);
+            });
+        }
+
+        function updateQuantity(id, val) {
+            const tx = db.transaction(['products'], 'readwrite');
+            const store = tx.objectStore('products');
+            store.get(id).onsuccess = (e) => {
+                const data = e.target.result;
+                if (!data) return;
+                if (val === '') { data.quantity = null; data.filled = false; } else { data.quantity = parseFloat(val); data.filled = true; }
+                store.put(data);
+                const localP = productData.find(p => p.id === id);
+                if(localP) { localP.quantity = data.quantity; localP.filled = data.filled; }
+                const inputEl = document.querySelector(`input[data-id="${id}"]`);
+                if(inputEl) { data.filled ? inputEl.classList.add('filled') : inputEl.classList.remove('filled'); }
+            };
+        }
+
+        el('reset-day-btn').onclick = () => {
+            if(!confirm("Reset all quantities for a new day?")) return;
+            const tx = db.transaction(['products'], 'readwrite');
+            const store = tx.objectStore('products');
+            store.openCursor().onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) { const updateData = cursor.value; updateData.quantity = null; updateData.filled = false; cursor.update(updateData); cursor.continue(); } else { loadProducts(); }
+            };
+        };
+
+        el('search-input').addEventListener('input', renderList);
+        el('filter-select').addEventListener('change', renderList);
+
+        function setupLongPress(element, id) {
+            let timer;
+            const start = () => { timer = setTimeout(() => { if(confirm("Delete product?")) deleteProduct(id); }, 800); };
+            const end = () => { if (timer) clearTimeout(timer); };
+            element.addEventListener('touchstart', start); element.addEventListener('touchend', end);
+            element.addEventListener('mousedown', start); element.addEventListener('mouseup', end);
+            element.addEventListener('touchmove', end);
+            element.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); return false; });
+        }
+
+        function deleteProduct(id) {
+            const tx = db.transaction(['products'], 'readwrite');
+            tx.objectStore('products').delete(id);
+            tx.oncomplete = () => {
+                const row = document.querySelector(`li[data-id="${id}"]`);
+                if(row) { row.classList.add('deleting'); setTimeout(loadProducts, 300); } else { loadProducts(); }
+            };
+        }
+        initDB();
+    </script>
+</body>
+</html>

@@ -6,11 +6,9 @@
     <meta name="theme-color" content="#007bff">
     <title>Shelf Master</title>
 
-    <!-- 1. STATIC ICONS -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iIzAwN2JmZiIvPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0xMDYgMTQwaDMwMHY1MEgxMDZ6bTAgMTEwaDMwMHY1MEgxMDZ6bTAgMTEwaDMwMHY1MEgxMDZ6Ii8+PC9zdmc+">
     <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iIzAwN2JmZiIvPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0xMDYgMTQwaDMwMHY1MEgxMDZ6bTAgMTEwaDMwMHY1MEgxMDZ6bTAgMTEwaDMwMHY1MEgxMDZ6Ii8+PC9zdmc+">
 
-    <!-- 2. Web App Manifest -->
     <script>
         const iconBase64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iIzAwN2JmZiIvPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0xMDYgMTQwaDMwMHY1MEgxMDZ6bTAgMTEwaDMwMHY1MEgxMDZ6bTAgMTEwaDMwMHY1MEgxMDZ6Ii8+PC9zdmc+";
         const manifest = {
@@ -35,50 +33,53 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #fff; color: var(--text-dark); padding-bottom: 80px; }
 
-        /* Google Translate Styling */
-        .goog-te-banner-frame { display: none !important; }
-        body { top: 0 !important; }
-        #google_translate_element { padding: 8px 15px; text-align: center; background: #f8f9fa; border-bottom: 1px solid var(--border); }
-        .goog-te-gadget-simple { background-color: white !important; border: 1px solid #ccc !important; padding: 6px !important; border-radius: 4px; font-size: 14px; width: 100%; }
-        .goog-te-gadget-simple span { color: #333 !important; }
-
-        h1, h2, h3 { margin: 0; }
-        .hidden { display: none !important; }
-        .btn { border: none; padding: 10px 15px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
-        .btn:active { opacity: 0.8; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
-        
+        /* Header Layout */
         header { position: sticky; top: 0; z-index: 100; background: white; box-shadow: var(--shadow); }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--primary); color: white; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: var(--primary); color: white; }
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+
+        /* Header Buttons */
+        .icon-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 5px; }
+        .btn { border: none; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-primary { background: var(--primary); color: white; padding: 10px 15px; font-size: 14px; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 10px 15px; font-size: 14px; }
+
+        /* 3-Dots Dropdown Menu */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-content { display: none; position: absolute; right: 0; background-color: #f9f9f9; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1; border-radius: 4px; overflow: hidden; }
+        .dropdown-content a { color: black; padding: 12px 16px; text-decoration: none; display: block; font-size: 14px; }
+        .dropdown-content a:active { background-color: #ddd; }
+        .show { display: block; }
+
+        /* Google Translate & Controls */
+        #google_translate_element { padding: 8px 15px; text-align: center; background: #f8f9fa; border-bottom: 1px solid var(--border); }
+        .goog-te-gadget-simple { background-color: white !important; border: 1px solid #ccc !important; padding: 6px !important; border-radius: 4px; width: 100%; }
         
-        /* Dropdown Styling */
         .controls { padding: 10px; display: grid; grid-template-columns: 1fr 130px; gap: 10px; background: #fff; border-bottom: 1px solid var(--border); }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; outline: none; }
         
-        /* Colored Dropdown Options */
+        /* Coloring Logic */
+        .product-row.filled { background-color: #f0fff4; } /* Green background for row */
         #filter-select option[value="completed"] { background-color: #d4edda; color: #155724; font-weight: bold; }
         #filter-select option[value="pending"] { background-color: #ffffff; color: #333; }
-        #filter-select option[value="all"] { background-color: #f8f9fa; color: #333; }
 
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; outline: none; }
-        input:focus { border-color: var(--primary); }
-        
+        /* List Styling */
         #product-list { list-style: none; padding: 0; margin: 0; }
-        .product-row { display: grid; grid-template-columns: 60px 1fr 90px; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border); align-items: center; background: white; transition: opacity 0.3s ease, transform 0.3s ease; user-select: none; }
-        .product-row.deleting { opacity: 0; transform: translateX(-20px); }
+        .product-row { display: grid; grid-template-columns: 60px 1fr 90px; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border); align-items: center; background: white; transition: background-color 0.2s; user-select: none; }
         .p-img-wrapper { width: 60px; height: 60px; border-radius: 12px; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
         .p-img { width: 100%; height: 100%; object-fit: cover; }
-        .p-img-placeholder { font-size: 24px; color: #ccc; }
         .p-details { overflow: hidden; }
         .p-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .p-unit { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; background: var(--bg-light); padding: 2px 6px; border-radius: 4px; display: inline-block; }
         mark { background-color: #ffeeba; color: var(--text-dark); padding: 0 2px; }
+        
         .p-qty-input { width: 100%; height: 50px; text-align: center; font-size: 18px; font-weight: bold; border: 2px solid var(--border); background: #fdfdfd; }
         .p-qty-input:focus { border-color: var(--primary); background: #fff; }
-        .p-qty-input.filled { border-color: var(--success); color: var(--success); background: #f0fff4; }
-        
-        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 200; }
+        .p-qty-input.filled { border-color: var(--success); color: var(--success); background: #fff; border-width: 2px; }
+
+        /* Fab & Modal */
+        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 200; border:none; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .modal.active { opacity: 1; pointer-events: auto; }
         .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 12px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
@@ -99,10 +100,22 @@
     <header>
         <div class="top-bar">
             <h3>Shelf Master</h3>
-            <button class="btn btn-danger" id="reset-day-btn" style="font-size: 12px; padding: 6px 10px;">Reset Day</button>
+            <div class="header-actions">
+                <button class="icon-btn" id="export-btn" title="Export as PDF">📄</button>
+                
+                <button class="btn btn-danger" id="reset-day-btn">Reset Day</button>
+                
+                <div class="dropdown">
+                    <button onclick="toggleMenu()" class="icon-btn dropbtn">⋮</button>
+                    <div id="myDropdown" class="dropdown-content">
+                        <a href="#" id="csv-export-btn">Export as CSV</a>
+                        <a href="#" id="backup-btn">Backup Data</a>
+                        <a href="#" id="restore-btn">Restore Data</a>
+                    </div>
+                </div>
+            </div>
         </div>
         
-        <!-- Google Translate (Limited to En, Kn, Ml) -->
         <div id="google_translate_element"></div>
         
         <div class="controls">
@@ -117,6 +130,8 @@
 
     <ul id="product-list"></ul>
     <button class="fab" id="open-add-modal">+</button>
+
+    <input type="file" id="restore-input" accept=".json" class="hidden">
 
     <div class="modal" id="add-modal">
         <div class="modal-content">
@@ -156,12 +171,14 @@
         </div>
     </div>
 
-    <!-- Google Translate Script (Restricted Languages) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
     <script type="text/javascript">
         function googleTranslateElementInit() {
             new google.translate.TranslateElement({
                 pageLanguage: 'en',
-                includedLanguages: 'en,kn,ml', // ONLY English, Kannada, Malayalam
+                includedLanguages: 'en,kn,ml',
                 layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
                 autoDisplay: false
             }, 'google_translate_element');
@@ -177,6 +194,8 @@
         let currentImageBlob = null;
         let activeObjectUrls = [];
         const el = (id) => document.getElementById(id);
+        const { jsPDF } = window.jspdf;
+
 
         function initDB() {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -187,7 +206,150 @@
             request.onsuccess = (e) => { db = e.target.result; loadProducts(); };
         }
 
-        // --- EXTREME COMPRESSION LOGIC (Target 5-10KB) ---
+        // --- MENU LOGIC ---
+        function toggleMenu() {
+            document.getElementById("myDropdown").classList.toggle("show");
+        }
+        window.onclick = function(event) {
+            if (!event.target.matches('.dropbtn')) {
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+
+        // --- EXPORT LOGIC (OLD CSV MOVED TO MENU) ---
+        function exportAsCSV() {
+            const completedItems = productData.filter(p => p.filled);
+            if(completedItems.length === 0) return alert("No completed items to export.");
+            
+            let csvContent = "data:text/csv;charset=utf-8,Product Name,Quantity,Unit\n";
+            completedItems.forEach(p => {
+                csvContent += `${p.name},${p.quantity},${p.unit}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "ShelfMaster_Report_" + new Date().toISOString().slice(0,10) + ".csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+        el('csv-export-btn').onclick = exportAsCSV; // Assign new menu item
+
+        // --- NEW: PDF EXPORT LOGIC (CAPTURES UI WITH IMAGES) ---
+        el('export-btn').onclick = () => {
+            const listElement = el('product-list');
+
+            // Temporarily hide the FAB button and sticky header for clean capture
+            const fab = el('open-add-modal');
+            fab.style.display = 'none';
+
+            html2canvas(document.body, { 
+                scale: 2, // Improve resolution
+                useCORS: true, 
+                scrollX: 0,
+                scrollY: -window.scrollY // Capture from the top
+            }).then(canvas => {
+                // Re-show FAB
+                fab.style.display = 'flex';
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgProps= pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save("ShelfMaster_List_" + new Date().toISOString().slice(0,10) + ".pdf");
+            });
+        };
+
+
+        // --- BACKUP LOGIC (All Data) ---
+        el('backup-btn').onclick = async () => {
+            // Needed to convert Blobs to Base64 for JSON storage
+            const exportData = await Promise.all(productData.map(async (p) => {
+                let base64Img = null;
+                if(p.image) {
+                    base64Img = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(p.image);
+                    });
+                }
+                return { ...p, image: base64Img }; // Replace Blob with Base64 string
+            }));
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "ShelfMaster_Backup.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        };
+
+        // --- RESTORE LOGIC ---
+        el('restore-btn').onclick = () => el('restore-input').click();
+        
+        el('restore-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const importedData = JSON.parse(event.target.result);
+                    if(!Array.isArray(importedData)) throw new Error("Invalid file");
+
+                    if(!confirm(`Found ${importedData.length} items. Restore? (Current data will be replaced)`)) return;
+
+                    // Clear DB
+                    const tx = db.transaction(['products'], 'readwrite');
+                    const store = tx.objectStore('products');
+                    store.clear();
+
+                    // Process and Add
+                    importedData.forEach(async (item) => {
+                        // Convert Base64 back to Blob
+                        let blob = null;
+                        if(item.image && typeof item.image === 'string') {
+                            const res = await fetch(item.image);
+                            blob = await res.blob();
+                        }
+                        
+                        const newItem = {
+                            id: item.id || Date.now(),
+                            name: item.name,
+                            image: blob,
+                            unit: item.unit,
+                            quantity: item.quantity,
+                            filled: item.filled
+                        };
+                        
+                        const addTx = db.transaction(['products'], 'readwrite');
+                        addTx.objectStore('products').put(newItem);
+                    });
+
+                    setTimeout(() => {
+                        alert("Restore Successful!");
+                        loadProducts();
+                    }, 1000);
+
+                } catch(err) {
+                    alert("Error restoring file: " + err);
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        // --- COMPRESSION LOGIC (5-10KB Target) ---
         el('file-input').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -198,7 +360,6 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    // WIDTH: 120px (Tiny thumbnail)
                     const maxWidth = 120; 
                     let width = img.width;
                     let height = img.height;
@@ -212,14 +373,11 @@
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // QUALITY: 0.5 (Medium compression)
                     canvas.toBlob((blob) => {
                         currentImageBlob = blob;
                         el('preview-img').src = URL.createObjectURL(blob);
                         el('preview-img').classList.remove('hidden');
                         el('preview-text').classList.add('hidden');
-                        
-                        // Debug size (visible in computer console)
                         console.log("Size: " + (blob.size/1024).toFixed(2) + " KB");
                     }, 'image/jpeg', 0.5); 
                 };
@@ -311,7 +469,9 @@
                 if (filterVal === 'completed' && !p.filled) return;
                 
                 const li = document.createElement('li');
-                li.className = 'product-row'; li.dataset.id = p.id;
+                // Added 'filled' class to row for Green Background effect
+                li.className = `product-row ${p.filled ? 'filled' : ''}`; 
+                li.dataset.id = p.id;
                 
                 let imgUrl = '';
                 if (p.image) {
@@ -342,15 +502,35 @@
             store.get(id).onsuccess = (e) => {
                 const data = e.target.result;
                 if (!data) return;
-                if (val === '') { data.quantity = null; data.filled = false; } else { data.quantity = parseFloat(val); data.filled = true; }
+                
+                if (val === '') { 
+                    data.quantity = null; 
+                    data.filled = false; 
+                } else { 
+                    data.quantity = parseFloat(val); 
+                    data.filled = true; 
+                }
+                
                 store.put(data);
+                
                 const localP = productData.find(p => p.id === id);
                 if(localP) { localP.quantity = data.quantity; localP.filled = data.filled; }
-                const inputEl = document.querySelector(`input[data-id="${id}"]`);
-                if(inputEl) { data.filled ? inputEl.classList.add('filled') : inputEl.classList.remove('filled'); }
+                
+                // Update UI: Row Color & Input Color
+                const row = document.querySelector(`li[data-id="${id}"]`);
+                const inputEl = row.querySelector('input');
+                
+                if(data.filled) {
+                    row.classList.add('filled');
+                    inputEl.classList.add('filled');
+                } else {
+                    row.classList.remove('filled');
+                    inputEl.classList.remove('filled');
+                }
             };
         }
 
+        // --- RESET LOGIC (FIXED) ---
         el('reset-day-btn').onclick = () => {
             if(!confirm("Reset all quantities for a new day? Images will be KEPT.")) return;
             const tx = db.transaction(['products'], 'readwrite');
@@ -358,16 +538,11 @@
             store.openCursor().onsuccess = (e) => {
                 const cursor = e.target.result;
                 if (cursor) {
-                    const original = cursor.value;
-                    const updatedRecord = {
-                        id: original.id,
-                        name: original.name,
-                        image: original.image, 
-                        unit: original.unit,
-                        quantity: null,      
-                        filled: false        
-                    };
-                    cursor.update(updatedRecord);
+                    const record = cursor.value;
+                    // FIX: Mutate existing object instead of creating a new one.
+                    record.quantity = null;      
+                    record.filled = false;       
+                    cursor.update(record);
                     cursor.continue();
                 } else {
                     loadProducts();

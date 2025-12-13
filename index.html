@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="theme-color" content="#007bff">
     <title>Shelf Master</title>
 
@@ -67,8 +67,8 @@
         /* List Styling */
         #product-list { list-style: none; padding: 0; margin: 0; }
         .product-row { display: grid; grid-template-columns: 60px 1fr 90px; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border); align-items: center; background: white; transition: background-color 0.2s; user-select: none; }
-        .p-img-wrapper { width: 60px; height: 60px; border-radius: 12px; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); cursor: pointer; } /* Added cursor pointer */
-        .p-img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; } /* Disable pointer events on img to let wrapper handle click */
+        .p-img-wrapper { width: 60px; height: 60px; border-radius: 12px; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); cursor: pointer; }
+        .p-img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; } 
         .p-details { overflow: hidden; }
         .p-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .p-unit { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; background: var(--bg-light); padding: 2px 6px; border-radius: 4px; display: inline-block; }
@@ -95,36 +95,28 @@
         #preview-container { width: 100%; height: 150px; background: #eee; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; border: 2px dashed #ccc; }
         #preview-img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
-        /* --- NEW: IMAGE VIEWER (ZOOM) STYLES --- */
+        /* --- IMAGE VIEWER (ZOOM) STYLES --- */
         .image-viewer {
-            display: none; /* Hidden by default */
+            display: none;
             position: fixed;
-            z-index: 2000; /* Sit on top of everything */
+            z-index: 2000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto; 
-            background-color: rgba(0,0,0,0.9); /* Black background */
-            justify-content: center;
+            overflow: hidden; /* Important for custom pan logic */
+            background-color: rgba(0,0,0,0.95);
+            touch-action: none; /* Disable browser handling of gestures */
             align-items: center;
+            justify-content: center;
         }
-        .image-viewer.active {
-            display: flex;
-        }
+        .image-viewer.active { display: flex; }
         .viewer-content {
-            margin: auto;
-            display: block;
-            width: auto;
-            max-width: 95%;
-            max-height: 95%;
-            border-radius: 5px;
-            animation-name: zoom;
-            animation-duration: 0.3s;
-        }
-        @keyframes zoom {
-            from {transform:scale(0.8); opacity: 0;}
-            to {transform:scale(1); opacity: 1;}
+            max-width: 100%;
+            max-height: 100%;
+            transform-origin: center center;
+            transition: transform 0.1s linear; /* Smooth pan/zoom */
+            will-change: transform;
         }
     </style>
 </head>
@@ -167,10 +159,10 @@
         <div class="modal-content">
             <h2 style="margin-bottom: 15px;">Add Product</h2>
             <div id="preview-container" onclick="document.getElementById('file-input').click()">
-                <span id="preview-text" style="color:#888;">Tap to Capture/Upload</span>
+                <span id="preview-text" style="color:#888;">Tap to Upload/Capture</span>
                 <img id="preview-img" class="hidden">
             </div>
-            <input type="file" id="file-input" accept="image/*" capture="environment" class="hidden">
+            <input type="file" id="file-input" accept="image/*" class="hidden">
             
             <div class="form-group">
                 <label class="form-label">Product Name</label>
@@ -250,21 +242,98 @@
             }
         }
 
-        // --- NEW: IMAGE VIEWER LOGIC ---
+        // --- IMAGE VIEWER ZOOM LOGIC (PINCH & PAN) ---
         const imageViewer = el('image-viewer');
         const fullImage = el('full-image');
+        
+        // Zoom State Variables
+        let state = {
+            scale: 1,
+            panning: false,
+            pointX: 0,
+            pointY: 0,
+            startX: 0,
+            startY: 0
+        };
+
+        function setTransform() {
+            fullImage.style.transform = `translate(${state.pointX}px, ${state.pointY}px) scale(${state.scale})`;
+        }
 
         function openImageViewer(src) {
             fullImage.src = src;
             imageViewer.classList.add('active');
+            // Reset Zoom State
+            state = { scale: 1, panning: false, pointX: 0, pointY: 0, startX: 0, startY: 0 };
+            setTransform();
         }
 
-        // Close viewer when clicking on the black background
-        imageViewer.onclick = function(e) {
-            if (e.target === imageViewer) {
-                imageViewer.classList.remove('active');
-            }
+        function closeImageViewer() {
+            imageViewer.classList.remove('active');
         }
+
+        // Event Listeners for Zooming/Panning
+        let startDist = 0;
+        let startScale = 1;
+
+        imageViewer.addEventListener('click', (e) => {
+            if (e.target === imageViewer) closeImageViewer(); // Close on background click
+        });
+        
+        // Double tap to reset
+        let lastTap = 0;
+        fullImage.addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            if (tapLength < 300 && tapLength > 0) {
+                // Double tap detected
+                state = { scale: 1, panning: false, pointX: 0, pointY: 0, startX: 0, startY: 0 };
+                setTransform();
+                e.preventDefault();
+            }
+            lastTap = currentTime;
+        });
+
+        imageViewer.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                // Pinch starts
+                e.preventDefault(); 
+                startDist = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                startScale = state.scale;
+            } else if (e.touches.length === 1) {
+                // Pan starts
+                state.startX = e.touches[0].clientX - state.pointX;
+                state.startY = e.touches[0].clientY - state.pointY;
+                state.panning = true;
+            }
+        });
+
+        imageViewer.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Stop screen scrolling
+            if (e.touches.length === 2) {
+                // Pinching
+                const dist = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                // Calculate new scale
+                let newScale = startScale * (dist / startDist);
+                // Limit zoom levels (0.5x to 5x)
+                state.scale = Math.min(Math.max(0.5, newScale), 5);
+                setTransform();
+            } else if (e.touches.length === 1 && state.panning && state.scale > 1) {
+                // Panning (only if zoomed in)
+                state.pointX = e.touches[0].clientX - state.startX;
+                state.pointY = e.touches[0].clientY - state.startY;
+                setTransform();
+            }
+        });
+
+        imageViewer.addEventListener('touchend', () => { state.panning = false; });
+
 
         // --- EXPORT & IMPORT LOGIC ---
         function exportAsCSV() {
@@ -458,11 +527,10 @@
                     <div><input type="number" step="${step}" class="p-qty-input ${filledClass} notranslate" value="${qtyValue}" placeholder="-" data-id="${p.id}"></div>
                 `;
 
-                // --- NEW: ATTACH CLICK LISTENER FOR ZOOM ---
                 if (imgUrl) {
                     const imgWrapper = li.querySelector('.p-img-wrapper');
                     imgWrapper.onclick = (e) => {
-                        e.stopPropagation(); // Prevent affecting other row clicks
+                        e.stopPropagation(); 
                         openImageViewer(imgUrl);
                     };
                 }

@@ -60,15 +60,15 @@
         input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; outline: none; }
         
         /* Coloring Logic */
-        .product-row.filled { background-color: #f0fff4; } /* Green background for row */
+        .product-row.filled { background-color: #f0fff4; } 
         #filter-select option[value="completed"] { background-color: #d4edda; color: #155724; font-weight: bold; }
         #filter-select option[value="pending"] { background-color: #ffffff; color: #333; }
 
         /* List Styling */
         #product-list { list-style: none; padding: 0; margin: 0; }
         .product-row { display: grid; grid-template-columns: 60px 1fr 90px; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border); align-items: center; background: white; transition: background-color 0.2s; user-select: none; }
-        .p-img-wrapper { width: 60px; height: 60px; border-radius: 12px; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
-        .p-img { width: 100%; height: 100%; object-fit: cover; }
+        .p-img-wrapper { width: 60px; height: 60px; border-radius: 12px; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); cursor: pointer; } /* Added cursor pointer */
+        .p-img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; } /* Disable pointer events on img to let wrapper handle click */
         .p-details { overflow: hidden; }
         .p-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .p-unit { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; background: var(--bg-light); padding: 2px 6px; border-radius: 4px; display: inline-block; }
@@ -94,6 +94,38 @@
         input:checked + .slider:before { transform: translateX(22px); }
         #preview-container { width: 100%; height: 150px; background: #eee; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; border: 2px dashed #ccc; }
         #preview-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        /* --- NEW: IMAGE VIEWER (ZOOM) STYLES --- */
+        .image-viewer {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 2000; /* Sit on top of everything */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.9); /* Black background */
+            justify-content: center;
+            align-items: center;
+        }
+        .image-viewer.active {
+            display: flex;
+        }
+        .viewer-content {
+            margin: auto;
+            display: block;
+            width: auto;
+            max-width: 95%;
+            max-height: 95%;
+            border-radius: 5px;
+            animation-name: zoom;
+            animation-duration: 0.3s;
+        }
+        @keyframes zoom {
+            from {transform:scale(0.8); opacity: 0;}
+            to {transform:scale(1); opacity: 1;}
+        }
     </style>
 </head>
 <body>
@@ -102,9 +134,7 @@
             <h3>Shelf Master</h3>
             <div class="header-actions">
                 <button class="icon-btn" id="export-btn" title="Export as PDF">📄</button>
-                
                 <button class="btn btn-danger" id="reset-day-btn">Reset Day</button>
-                
                 <div class="dropdown">
                     <button onclick="toggleMenu()" class="icon-btn dropbtn">⋮</button>
                     <div id="myDropdown" class="dropdown-content">
@@ -171,6 +201,10 @@
         </div>
     </div>
 
+    <div id="image-viewer" class="image-viewer">
+        <img class="viewer-content" id="full-image">
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
@@ -196,7 +230,6 @@
         const el = (id) => document.getElementById(id);
         const { jsPDF } = window.jspdf;
 
-
         function initDB() {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
             request.onupgradeneeded = (e) => {
@@ -207,31 +240,38 @@
         }
 
         // --- MENU LOGIC ---
-        function toggleMenu() {
-            document.getElementById("myDropdown").classList.toggle("show");
-        }
+        function toggleMenu() { document.getElementById("myDropdown").classList.toggle("show"); }
         window.onclick = function(event) {
             if (!event.target.matches('.dropbtn')) {
                 var dropdowns = document.getElementsByClassName("dropdown-content");
                 for (var i = 0; i < dropdowns.length; i++) {
-                    var openDropdown = dropdowns[i];
-                    if (openDropdown.classList.contains('show')) {
-                        openDropdown.classList.remove('show');
-                    }
+                    if (dropdowns[i].classList.contains('show')) dropdowns[i].classList.remove('show');
                 }
             }
         }
 
-        // --- EXPORT LOGIC (OLD CSV MOVED TO MENU) ---
+        // --- NEW: IMAGE VIEWER LOGIC ---
+        const imageViewer = el('image-viewer');
+        const fullImage = el('full-image');
+
+        function openImageViewer(src) {
+            fullImage.src = src;
+            imageViewer.classList.add('active');
+        }
+
+        // Close viewer when clicking on the black background
+        imageViewer.onclick = function(e) {
+            if (e.target === imageViewer) {
+                imageViewer.classList.remove('active');
+            }
+        }
+
+        // --- EXPORT & IMPORT LOGIC ---
         function exportAsCSV() {
             const completedItems = productData.filter(p => p.filled);
             if(completedItems.length === 0) return alert("No completed items to export.");
-            
             let csvContent = "data:text/csv;charset=utf-8,Product Name,Quantity,Unit\n";
-            completedItems.forEach(p => {
-                csvContent += `${p.name},${p.quantity},${p.unit}\n`;
-            });
-
+            completedItems.forEach(p => { csvContent += `${p.name},${p.quantity},${p.unit}\n`; });
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -240,40 +280,30 @@
             link.click();
             document.body.removeChild(link);
         };
-        el('csv-export-btn').onclick = exportAsCSV; // Assign new menu item
+        el('csv-export-btn').onclick = exportAsCSV;
 
-        // --- NEW: PDF EXPORT LOGIC (CAPTURES UI WITH IMAGES) ---
         el('export-btn').onclick = () => {
             const listElement = el('product-list');
-
-            // Temporarily hide the FAB button and sticky header for clean capture
             const fab = el('open-add-modal');
             fab.style.display = 'none';
-
             html2canvas(document.body, { 
-                scale: 2, // Improve resolution
+                scale: 2, 
                 useCORS: true, 
                 scrollX: 0,
-                scrollY: -window.scrollY // Capture from the top
+                scrollY: -window.scrollY 
             }).then(canvas => {
-                // Re-show FAB
                 fab.style.display = 'flex';
-
                 const imgData = canvas.toDataURL('image/jpeg', 0.9);
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const imgProps= pdf.getImageProperties(imgData);
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
                 pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
                 pdf.save("ShelfMaster_List_" + new Date().toISOString().slice(0,10) + ".pdf");
             });
         };
 
-
-        // --- BACKUP LOGIC (All Data) ---
         el('backup-btn').onclick = async () => {
-            // Needed to convert Blobs to Base64 for JSON storage
             const exportData = await Promise.all(productData.map(async (p) => {
                 let base64Img = null;
                 if(p.image) {
@@ -283,9 +313,8 @@
                         reader.readAsDataURL(p.image);
                     });
                 }
-                return { ...p, image: base64Img }; // Replace Blob with Base64 string
+                return { ...p, image: base64Img };
             }));
-
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
@@ -295,61 +324,37 @@
             downloadAnchorNode.remove();
         };
 
-        // --- RESTORE LOGIC ---
         el('restore-btn').onclick = () => el('restore-input').click();
         
         el('restore-input').onchange = (e) => {
             const file = e.target.files[0];
             if(!file) return;
-
             const reader = new FileReader();
             reader.onload = async (event) => {
                 try {
                     const importedData = JSON.parse(event.target.result);
                     if(!Array.isArray(importedData)) throw new Error("Invalid file");
-
                     if(!confirm(`Found ${importedData.length} items. Restore? (Current data will be replaced)`)) return;
-
-                    // Clear DB
+                    
                     const tx = db.transaction(['products'], 'readwrite');
-                    const store = tx.objectStore('products');
-                    store.clear();
-
-                    // Process and Add
+                    tx.objectStore('products').clear();
                     importedData.forEach(async (item) => {
-                        // Convert Base64 back to Blob
                         let blob = null;
                         if(item.image && typeof item.image === 'string') {
                             const res = await fetch(item.image);
                             blob = await res.blob();
                         }
-                        
-                        const newItem = {
-                            id: item.id || Date.now(),
-                            name: item.name,
-                            image: blob,
-                            unit: item.unit,
-                            quantity: item.quantity,
-                            filled: item.filled
-                        };
-                        
+                        const newItem = { id: item.id || Date.now(), name: item.name, image: blob, unit: item.unit, quantity: item.quantity, filled: item.filled };
                         const addTx = db.transaction(['products'], 'readwrite');
                         addTx.objectStore('products').put(newItem);
                     });
-
-                    setTimeout(() => {
-                        alert("Restore Successful!");
-                        loadProducts();
-                    }, 1000);
-
-                } catch(err) {
-                    alert("Error restoring file: " + err);
-                }
+                    setTimeout(() => { alert("Restore Successful!"); loadProducts(); }, 1000);
+                } catch(err) { alert("Error restoring file: " + err); }
             };
             reader.readAsText(file);
         };
 
-        // --- COMPRESSION LOGIC (5-10KB Target) ---
+        // --- ADD/COMPRESS/SAVE LOGIC ---
         el('file-input').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -359,26 +364,16 @@
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    
                     const maxWidth = 120; 
-                    let width = img.width;
-                    let height = img.height;
-                    
-                    if (width > maxWidth) { 
-                        height = (maxWidth / width) * height; 
-                        width = maxWidth; 
-                    }
-                    
-                    canvas.width = width; 
-                    canvas.height = height;
+                    let width = img.width; let height = img.height;
+                    if (width > maxWidth) { height = (maxWidth / width) * height; width = maxWidth; }
+                    canvas.width = width; canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
-
                     canvas.toBlob((blob) => {
                         currentImageBlob = blob;
                         el('preview-img').src = URL.createObjectURL(blob);
                         el('preview-img').classList.remove('hidden');
                         el('preview-text').classList.add('hidden');
-                        console.log("Size: " + (blob.size/1024).toFixed(2) + " KB");
                     }, 'image/jpeg', 0.5); 
                 };
                 img.src = event.target.result;
@@ -388,60 +383,34 @@
 
         const modal = el('add-modal');
         const unitToggle = el('unit-toggle');
-        
         el('open-add-modal').onclick = () => { modal.classList.add('active'); resetForm(); };
         el('cancel-add').onclick = () => modal.classList.remove('active');
-
         unitToggle.addEventListener('change', () => {
             const qtyInput = el('p-initial-qty');
             if(unitToggle.checked) {
-                el('unit-label-kg').style.color = 'var(--primary)';
-                el('unit-label-kg').style.fontWeight = 'bold';
-                el('unit-label-count').style.color = '#ccc';
-                el('unit-label-count').style.fontWeight = 'normal';
+                el('unit-label-kg').style.color = 'var(--primary)'; el('unit-label-kg').style.fontWeight = 'bold';
+                el('unit-label-count').style.color = '#ccc'; el('unit-label-count').style.fontWeight = 'normal';
                 qtyInput.step = "0.01"; 
             } else {
-                el('unit-label-kg').style.color = '#ccc';
-                el('unit-label-kg').style.fontWeight = 'normal';
-                el('unit-label-count').style.color = 'var(--primary)';
-                el('unit-label-count').style.fontWeight = 'bold';
+                el('unit-label-kg').style.color = '#ccc'; el('unit-label-kg').style.fontWeight = 'normal';
+                el('unit-label-count').style.color = 'var(--primary)'; el('unit-label-count').style.fontWeight = 'bold';
                 qtyInput.step = "1";
             }
         });
 
         function resetForm() {
-            el('p-name-input').value = ''; 
-            el('file-input').value = '';
-            el('p-initial-qty').value = '';
-            el('preview-img').src = ''; 
-            el('preview-img').classList.add('hidden'); 
-            el('preview-text').classList.remove('hidden');
-            currentImageBlob = null; 
-            unitToggle.checked = false; 
-            unitToggle.dispatchEvent(new Event('change'));
+            el('p-name-input').value = ''; el('file-input').value = ''; el('p-initial-qty').value = '';
+            el('preview-img').src = ''; el('preview-img').classList.add('hidden'); el('preview-text').classList.remove('hidden');
+            currentImageBlob = null; unitToggle.checked = false; unitToggle.dispatchEvent(new Event('change'));
         }
 
         el('save-product').onclick = () => {
             const name = el('p-name-input').value.trim();
             if (!name) return alert('Product Name is required');
-            
             const initQtyStr = el('p-initial-qty').value.trim();
-            let finalQty = null;
-            let isFilled = false;
-            if (initQtyStr !== '') {
-                finalQty = parseFloat(initQtyStr);
-                isFilled = true;
-            }
-
-            const newProduct = { 
-                id: Date.now(), 
-                name: name, 
-                image: currentImageBlob, 
-                unit: unitToggle.checked ? 'kg' : 'count', 
-                quantity: finalQty, 
-                filled: isFilled 
-            };
-            
+            let finalQty = null; let isFilled = false;
+            if (initQtyStr !== '') { finalQty = parseFloat(initQtyStr); isFilled = true; }
+            const newProduct = { id: Date.now(), name: name, image: currentImageBlob, unit: unitToggle.checked ? 'kg' : 'count', quantity: finalQty, filled: isFilled };
             const tx = db.transaction(['products'], 'readwrite');
             tx.objectStore('products').add(newProduct);
             tx.oncomplete = () => { modal.classList.remove('active'); loadProducts(); };
@@ -469,7 +438,6 @@
                 if (filterVal === 'completed' && !p.filled) return;
                 
                 const li = document.createElement('li');
-                // Added 'filled' class to row for Green Background effect
                 li.className = `product-row ${p.filled ? 'filled' : ''}`; 
                 li.dataset.id = p.id;
                 
@@ -489,6 +457,16 @@
                     <div class="p-details"><div class="p-name">${displayName}</div><span class="p-unit">${p.unit}</span></div>
                     <div><input type="number" step="${step}" class="p-qty-input ${filledClass} notranslate" value="${qtyValue}" placeholder="-" data-id="${p.id}"></div>
                 `;
+
+                // --- NEW: ATTACH CLICK LISTENER FOR ZOOM ---
+                if (imgUrl) {
+                    const imgWrapper = li.querySelector('.p-img-wrapper');
+                    imgWrapper.onclick = (e) => {
+                        e.stopPropagation(); // Prevent affecting other row clicks
+                        openImageViewer(imgUrl);
+                    };
+                }
+
                 const input = li.querySelector('input');
                 input.addEventListener('blur', (e) => updateQuantity(p.id, e.target.value));
                 setupLongPress(li, p.id);
@@ -502,35 +480,18 @@
             store.get(id).onsuccess = (e) => {
                 const data = e.target.result;
                 if (!data) return;
-                
-                if (val === '') { 
-                    data.quantity = null; 
-                    data.filled = false; 
-                } else { 
-                    data.quantity = parseFloat(val); 
-                    data.filled = true; 
-                }
-                
+                if (val === '') { data.quantity = null; data.filled = false; } 
+                else { data.quantity = parseFloat(val); data.filled = true; }
                 store.put(data);
-                
                 const localP = productData.find(p => p.id === id);
                 if(localP) { localP.quantity = data.quantity; localP.filled = data.filled; }
-                
-                // Update UI: Row Color & Input Color
                 const row = document.querySelector(`li[data-id="${id}"]`);
                 const inputEl = row.querySelector('input');
-                
-                if(data.filled) {
-                    row.classList.add('filled');
-                    inputEl.classList.add('filled');
-                } else {
-                    row.classList.remove('filled');
-                    inputEl.classList.remove('filled');
-                }
+                if(data.filled) { row.classList.add('filled'); inputEl.classList.add('filled'); } 
+                else { row.classList.remove('filled'); inputEl.classList.remove('filled'); }
             };
         }
 
-        // --- RESET LOGIC (FIXED) ---
         el('reset-day-btn').onclick = () => {
             if(!confirm("Reset all quantities for a new day? Images will be KEPT.")) return;
             const tx = db.transaction(['products'], 'readwrite');
@@ -539,14 +500,10 @@
                 const cursor = e.target.result;
                 if (cursor) {
                     const record = cursor.value;
-                    // FIX: Mutate existing object instead of creating a new one.
-                    record.quantity = null;      
-                    record.filled = false;       
+                    record.quantity = null; record.filled = false;       
                     cursor.update(record);
                     cursor.continue();
-                } else {
-                    loadProducts();
-                }
+                } else { loadProducts(); }
             };
         };
 

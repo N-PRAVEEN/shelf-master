@@ -339,23 +339,68 @@
         };
         el('csv-export-btn').onclick = exportAsCSV;
 
+        // --- NEW: FULL LIST PAGINATION PDF EXPORT ---
         el('export-btn').onclick = () => {
             const listElement = el('product-list');
             const fab = el('open-add-modal');
-            fab.style.display = 'none';
+            const header = document.querySelector('header');
+            const controls = document.querySelector('.controls');
+            const translate = el('google_translate_element');
+
+            // 1. Prepare UI for "Clean" Print
+            fab.style.display = 'none'; // Hide + button
+            controls.style.display = 'none'; // Hide search/filter bars
+            if(translate) translate.style.display = 'none'; // Hide translate bar
+            
+            // Remove sticky positioning so html2canvas calculates full height correctly
+            const originalHeaderPos = header.style.position;
+            header.style.position = 'static'; 
+
+            // Scroll to top to ensure capture starts at 0
+            window.scrollTo(0,0);
+
             html2canvas(document.body, { 
-                scale: 2, 
+                scale: 2, // High resolution
                 useCORS: true, 
-                scrollX: 0,
-                scrollY: -window.scrollY 
+                scrollY: 0,
+                // FORCE height to match the content, not the window
+                windowHeight: document.documentElement.scrollHeight
             }).then(canvas => {
+                // 2. Restore UI immediately
                 fab.style.display = 'flex';
+                controls.style.display = 'grid';
+                if(translate) translate.style.display = 'block';
+                header.style.position = originalHeaderPos; // Restore sticky
+
+                // 3. Generate PDF with Pagination
                 const imgData = canvas.toDataURL('image/jpeg', 0.9);
                 const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgProps= pdf.getImageProperties(imgData);
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                
+                // Calculate scale to fit width
+                const ratio = pageWidth / imgWidth;
+                const scaledHeight = imgHeight * ratio;
+                
+                let heightLeft = scaledHeight;
+                let position = 0;
+
+                // First Page
+                pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, scaledHeight);
+                heightLeft -= pageHeight;
+
+                // Add extra pages if list is long
+                while (heightLeft >= 0) {
+                    position = heightLeft - scaledHeight; // Calculate new top position
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, scaledHeight);
+                    heightLeft -= pageHeight;
+                }
+
                 pdf.save("ShelfMaster_List_" + new Date().toISOString().slice(0,10) + ".pdf");
             });
         };
